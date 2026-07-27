@@ -44,7 +44,7 @@ export const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ payload,
       // If mock secret demo mode
       if (clientSecret.startsWith('mock_secret')) {
         const mockTxId = 'txn_stripe_' + Math.random().toString(36).substring(2, 10);
-        await savePaymentRecord(axiosSecure, { ...payload, transactionId: mockTxId }).catch(() => {});
+        await savePaymentRecord(axiosSecure, { ...payload, transactionId: mockTxId, status: 'Pending' }).catch(() => {});
         onSuccess(mockTxId);
         setProcessing(false);
         return;
@@ -72,7 +72,8 @@ export const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ payload,
         await savePaymentRecord(axiosSecure, {
           ...payload,
           transactionId: paymentIntent.id,
-        });
+          status: 'Pending',
+        }).catch(() => {});
         onSuccess(paymentIntent.id);
       }
     } catch (err: any) {

@@ -1,7 +1,11 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
+import { axiosSecure } from '../../api/axiosConfig';
+import { fetchUserOrders, Order } from '../../api/orderApi';
+import { OrderStatusBadge } from '../../components/common/OrderStatusBadge';
 import {
   FaShoppingBag,
   FaCalendarCheck,
@@ -9,8 +13,8 @@ import {
   FaWallet,
   FaUtensils,
   FaClock,
-  FaCheckCircle,
   FaCamera,
+  FaBoxOpen,
 } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
@@ -19,6 +23,17 @@ import { uploadImageToCloudinary } from '../../utils/imageUpload';
 export const UserHome: React.FC = () => {
   const { user } = useAuth();
   const { cart } = useCart();
+
+  // Live orders from backend
+  const { data: orders = [] } = useQuery<Order[]>({
+    queryKey: ['user-orders', user?.email],
+    queryFn: () => fetchUserOrders(axiosSecure, user!.email),
+    enabled: !!user?.email,
+  });
+
+  // Pending orders count for metrics
+  const pendingCount = orders.filter((o) => o.status === 'Pending').length;
+  const totalSpent = orders.reduce((acc, o) => acc + (o.totalPrice || 0), 0);
 
   const userStats = [
     {
@@ -44,37 +59,10 @@ export const UserHome: React.FC = () => {
     },
     {
       title: 'Total Spent',
-      value: '$184.50',
+      value: totalSpent > 0 ? `$${totalSpent.toFixed(2)}` : '$0.00',
       icon: FaWallet,
       gradient: 'from-blue-600 to-cyan-600',
       link: '/dashboard/payment-history',
-    },
-  ];
-
-  const recentOrders = [
-    {
-      id: 'ORD-9821',
-      name: 'Caeser Salad & Pizza Margherita',
-      date: 'March 24, 2026',
-      price: '$34.50',
-      payment: 'Stripe',
-      status: 'Delivered',
-    },
-    {
-      id: 'ORD-9740',
-      name: 'Roasted Pork Belly',
-      date: 'March 18, 2026',
-      price: '$28.00',
-      payment: 'SSLCommerz',
-      status: 'Delivered',
-    },
-    {
-      id: 'ORD-9612',
-      name: 'Tuna Niçoise & Soft Drink',
-      date: 'March 10, 2026',
-      price: '$22.00',
-      payment: 'Stripe',
-      status: 'Delivered',
     },
   ];
 
@@ -145,7 +133,7 @@ export const UserHome: React.FC = () => {
           <p className="text-gray-300 text-xs md:text-sm font-light">
             {user?.email} • Member Status:{' '}
             <span className="text-emerald-400 font-bold inline-flex items-center space-x-1">
-              <FaCheckCircle className="w-3.5 h-3.5 inline mr-1" /> Verified
+              ✅ Verified
             </span>
           </p>
         </div>
@@ -238,51 +226,67 @@ export const UserHome: React.FC = () => {
         </Link>
       </div>
 
-      {/* Recent Orders Activity Table */}
+      {/* Live Orders Activity Table */}
       <div className="bg-white dark:bg-dark-100 p-6 md:p-8 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
         <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-4">
           <h3 className="font-cinzel font-bold text-lg uppercase tracking-wider text-gray-900 dark:text-white flex items-center space-x-2">
             <FaClock className="w-5 h-5 text-[#D1A054]" />
-            <span>Recent Activity & Order History</span>
+            <span>My Orders & Order History</span>
           </h3>
-          <Link
-            to="/shop"
-            className="text-xs font-bold text-[#D1A054] hover:underline uppercase tracking-wider"
-          >
+          {pendingCount > 0 && (
+            <span className="bg-yellow-100 text-yellow-800 border border-yellow-300 font-bold text-xs px-3 py-1 rounded-full">
+              {pendingCount} Pending
+            </span>
+          )}
+          <Link to="/shop" className="text-xs font-bold text-[#D1A054] hover:underline uppercase tracking-wider">
             Explore Menu →
           </Link>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs md:text-sm">
-            <thead className="bg-[#F3F3F3] dark:bg-dark-200 text-gray-700 dark:text-gray-300 font-cinzel font-bold uppercase tracking-wider">
-              <tr>
-                <th className="py-4 px-4 rounded-l">Order ID</th>
-                <th className="py-4 px-4">Items</th>
-                <th className="py-4 px-4">Date</th>
-                <th className="py-4 px-4">Price</th>
-                <th className="py-4 px-4">Gateway</th>
-                <th className="py-4 px-4 rounded-r">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {recentOrders.map((order, idx) => (
-                <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors">
-                  <td className="py-4 px-4 font-mono font-bold text-gray-900 dark:text-white">{order.id}</td>
-                  <td className="py-4 px-4 font-medium text-gray-800 dark:text-gray-200">{order.name}</td>
-                  <td className="py-4 px-4 text-gray-500">{order.date}</td>
-                  <td className="py-4 px-4 font-bold text-[#D1A054]">{order.price}</td>
-                  <td className="py-4 px-4 text-gray-500">{order.payment}</td>
-                  <td className="py-4 px-4">
-                    <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold px-3 py-1 rounded-full text-xs border border-emerald-500/30 inline-flex items-center space-x-1">
-                      <FaCheckCircle className="w-3 h-3 mr-1" /> {order.status}
-                    </span>
-                  </td>
+        {orders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <FaBoxOpen className="w-12 h-12 mb-3 opacity-30" />
+            <p className="font-cinzel text-sm">No orders yet. Start ordering!</p>
+            <Link to="/shop" className="mt-3 text-xs font-bold text-[#D1A054] hover:underline">Browse Our Shop →</Link>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs md:text-sm">
+              <thead className="bg-[#F3F3F3] dark:bg-dark-200 text-gray-700 dark:text-gray-300 font-cinzel font-bold uppercase tracking-wider">
+                <tr>
+                  <th className="py-4 px-4 rounded-l">Order ID</th>
+                  <th className="py-4 px-4">Items</th>
+                  <th className="py-4 px-4">Date</th>
+                  <th className="py-4 px-4">Total</th>
+                  <th className="py-4 px-4">Payment</th>
+                  <th className="py-4 px-4 rounded-r">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {orders.slice().reverse().map((order) => (
+                  <tr key={order._id} className="hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors">
+                    <td className="py-4 px-4 font-mono font-bold text-gray-900 dark:text-white text-xs">
+                      #{order._id.slice(-8).toUpperCase()}
+                    </td>
+                    <td className="py-4 px-4 font-medium text-gray-800 dark:text-gray-200 max-w-[160px] truncate">
+                      {order.items?.map((it) => it.name).join(', ') || `${order.items?.length || 0} item(s)`}
+                    </td>
+                    <td className="py-4 px-4 text-gray-500">
+                      {order.createdAt
+                        ? new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                        : '—'}
+                    </td>
+                    <td className="py-4 px-4 font-bold text-[#D1A054]">${order.totalPrice?.toFixed(2)}</td>
+                    <td className="py-4 px-4 text-gray-500 capitalize">{order.paymentMethod || 'Stripe'}</td>
+                    <td className="py-4 px-4">
+                      <OrderStatusBadge status={order.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

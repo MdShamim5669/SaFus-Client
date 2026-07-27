@@ -14,4 +14,5 @@ export interface PaymentSavePayload extends CheckoutSchemaType {
   totalPrice: number;
   items: CartItem[];
   cartIds: string[];
+  status?: 'Pending' | 'Processing' | 'Delivered' | 'Cancelled';
 }

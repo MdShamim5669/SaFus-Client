@@ -27,6 +27,7 @@ import { UserBookings } from '../pages/dashboard/UserBookings';
 
 import { ManageMenu } from '../pages/admin/ManageMenu';
 import { ManageUsers } from '../pages/admin/ManageUsers';
+import { ManageOrders } from '../pages/admin/ManageOrders';
 
 export const router = createBrowserRouter([
   {
@@ -112,6 +113,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminRoute>
             <ManageUsers />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: 'manage-orders',
+        element: (
+          <AdminRoute>
+            <ManageOrders />
           </AdminRoute>
         ),
       },

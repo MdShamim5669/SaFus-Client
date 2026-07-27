@@ -1,19 +1,17 @@
 import { AxiosInstance } from 'axios';
-import { CartItem } from './cartApi';
+import { CartItem } from '../types/cart';
+
+export type OrderStatus = 'Pending' | 'Processing' | 'Delivered' | 'Cancelled';
 
 export interface Order {
   _id: string;
   userEmail: string;
-  customerName: string;
-  phone: string;
-  address: string;
-  city: string;
-  postalCode: string;
+  userName: string;
   items: CartItem[];
   totalPrice: number;
-  paymentMethod: 'stripe' | 'sslcommerz';
+  paymentMethod: string;
   transactionId: string;
-  status: 'pending' | 'preparing' | 'on_the_way' | 'delivered' | 'cancelled';
+  status: OrderStatus;
   createdAt: string;
 }
 
@@ -23,11 +21,15 @@ export const fetchUserOrders = async (axiosSecure: AxiosInstance, email: string)
 };
 
 export const fetchAllOrders = async (axiosSecure: AxiosInstance): Promise<Order[]> => {
-  const response = await axiosSecure.get<Order[]>('/orders/all');
+  const response = await axiosSecure.get<Order[]>('/orders');
   return response.data;
 };
 
-export const updateOrderStatus = async (axiosSecure: AxiosInstance, id: string, status: Order['status']): Promise<Order> => {
+export const updateOrderStatus = async (
+  axiosSecure: AxiosInstance,
+  id: string,
+  status: OrderStatus
+): Promise<Order> => {
   const response = await axiosSecure.patch<Order>(`/orders/${id}`, { status });
   return response.data;
 };

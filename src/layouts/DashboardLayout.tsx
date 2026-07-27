@@ -14,6 +14,7 @@ import {
   FaTimes,
   FaChartPie,
   FaWallet,
+  FaClipboardList,
 } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
 import { useRole } from '../hooks/useRole';
@@ -63,6 +64,11 @@ export const DashboardLayout: React.FC = () => {
       <li>
         <NavLink to="/dashboard/all-users" className={navItemStyle} onClick={() => setSidebarOpen(false)}>
           <FaUsers className="w-4 h-4" /> <span>All Users</span>
+        </NavLink>
+      </li>
+      <li>
+        <NavLink to="/dashboard/manage-orders" className={navItemStyle} onClick={() => setSidebarOpen(false)}>
+          <FaClipboardList className="w-4 h-4" /> <span>Manage Orders</span>
         </NavLink>
       </li>
       <li>
