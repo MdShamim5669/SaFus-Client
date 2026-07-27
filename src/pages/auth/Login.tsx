@@ -12,6 +12,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { auth, googleProvider, facebookProvider, githubProvider } from '../../firebase/firebase.config';
 import { Helmet } from 'react-helmet-async';
 import { loginSchema, LoginSchemaType, loginWithCaptchaSchema, LoginWithCaptchaType } from '../../schemas';
+import { getSavedUserProfile, saveUserProfileToDb } from '../../api/userApi';
 
 export const Login: React.FC = () => {
   const { login } = useAuth();
@@ -67,15 +68,30 @@ export const Login: React.FC = () => {
     setIsSubmitting(true);
     try {
       await login({ email: data.email, password: data.password });
+      const storedUser = localStorage.getItem('user_data');
+      let targetPath = from;
+      if (from === '/dashboard') {
+        try {
+          const parsed = storedUser ? JSON.parse(storedUser) : null;
+          if (parsed?.role === 'admin' || parsed?.email?.toLowerCase().includes('admin')) {
+            targetPath = '/dashboard/admin-home';
+          } else {
+            targetPath = '/dashboard/user-home';
+          }
+        } catch (e) {
+          targetPath = '/dashboard';
+        }
+      }
+
       Swal.fire({
         position: 'center',
         icon: 'success',
-        title: 'User Login Successful!',
+        title: 'Login Successful!',
         text: 'Welcome back to SaFus Restaurant',
         showConfirmButton: false,
-        timer: 1800,
+        timer: 1500,
       });
-      navigate(from, { replace: true });
+      navigate(targetPath, { replace: true });
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Invalid email or password. Please try again.';
       setAuthError(msg);
@@ -92,15 +108,19 @@ export const Login: React.FC = () => {
       const result = await signInWithPopup(auth, provider);
       if (result.user) {
         const token = await result.user.getIdToken();
+        const userEmail = result.user.email || providerName.toLowerCase() + '@bistroboss.com';
+        const savedDb = getSavedUserProfile(userEmail);
         const userObj = {
           _id: result.user.uid,
-          name: result.user.displayName || providerName + ' User',
-          email: result.user.email || providerName.toLowerCase() + '@bistroboss.com',
-          role: 'user' as const,
+          name: savedDb?.name || result.user.displayName || providerName + ' User',
+          email: userEmail,
+          photoURL: savedDb?.photoURL || result.user.photoURL || undefined,
+          role: (savedDb?.role as any) || 'user',
           isVerified: true,
         };
         localStorage.setItem('access-token', token);
         localStorage.setItem('user_data', JSON.stringify(userObj));
+        saveUserProfileToDb(userObj);
 
         Swal.fire({
           position: 'center',

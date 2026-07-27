@@ -11,6 +11,8 @@ export interface AuthContextType {
   register: (userData: Omit<RegisterSchemaType, 'confirmPassword'>) => Promise<void>;
   verifyOtpCode: (payload: OtpSchemaType) => Promise<void>;
   logout: () => Promise<void>;
+  updateUserRole: (newRole: 'admin' | 'customer' | 'user') => void;
+  updateUserProfilePhoto: (photoURL: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

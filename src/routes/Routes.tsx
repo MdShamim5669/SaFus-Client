@@ -80,7 +80,14 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <DashboardHome /> },
       { path: 'user-home', element: <UserHome /> },
-      { path: 'admin-home', element: <DashboardHome /> },
+      {
+        path: 'admin-home',
+        element: (
+          <AdminRoute>
+            <DashboardHome />
+          </AdminRoute>
+        ),
+      },
       { path: 'payment-history', element: <PaymentHistory /> },
       { path: 'my-reservations', element: <UserBookings /> },
       { path: 'add-review', element: <AddReviewForm /> },

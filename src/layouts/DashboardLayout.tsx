@@ -21,7 +21,7 @@ import { useRole } from '../hooks/useRole';
 import { useCart } from '../hooks/useCart';
 
 export const DashboardLayout: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUserRole } = useAuth();
   const { isAdmin } = useRole();
   const { cart } = useCart();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -162,28 +162,44 @@ export const DashboardLayout: React.FC = () => {
           </ul>
         </div>
 
-        {/* User Info & Logout Footer */}
-        <div className="pt-4 border-t border-gray-800 flex items-center justify-between">
-          <div className="flex items-center space-x-3 overflow-hidden">
-            <img
-              src={
-                user?.photoURL ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Customer')}&background=D1A054&color=fff&bold=true&size=64`
-              }
-              alt={user?.name || 'Avatar'}
-              className="w-9 h-9 rounded-full border border-gold-500 object-cover"
-            />
-            <div className="truncate">
-              <p className="text-xs font-bold text-white truncate">{user?.name || 'Guest User'}</p>
-              <p className="text-[10px] text-gold-400 capitalize">{isAdmin ? 'Admin' : 'Customer'}</p>
+        {/* User Info, Role Switcher & Logout Footer */}
+        <div className="pt-4 border-t border-gray-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3 overflow-hidden">
+              <img
+                src={
+                  user?.photoURL ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Customer')}&background=D1A054&color=fff&bold=true&size=64`
+                }
+                alt={user?.name || 'Avatar'}
+                className="w-9 h-9 rounded-full border border-gold-500 object-cover"
+              />
+              <div className="truncate">
+                <p className="text-xs font-bold text-white truncate">{user?.name || 'Guest User'}</p>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block mt-0.5 ${isAdmin ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50' : 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'}`}>
+                  {isAdmin ? '🛡️ ADMIN' : '👤 CUSTOMER'}
+                </span>
+              </div>
             </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-gray-400 hover:text-red-400 transition-colors"
+              title="Logout"
+            >
+              <FaSignOutAlt className="w-4 h-4" />
+            </button>
           </div>
+
+          {/* Quick Role Switcher for Demo/Testing */}
           <button
-            onClick={handleLogout}
-            className="p-2 text-gray-400 hover:text-red-400 transition-colors"
-            title="Logout"
+            onClick={() => {
+              const newRole = isAdmin ? 'customer' : 'admin';
+              updateUserRole(newRole);
+              navigate(newRole === 'admin' ? '/dashboard/admin-home' : '/dashboard/user-home');
+            }}
+            className="w-full py-1.5 px-3 bg-gray-800 hover:bg-gray-700 text-gold-400 hover:text-gold-300 font-cinzel text-[11px] font-bold rounded-lg border border-gold-500/30 transition-all flex items-center justify-center space-x-2"
           >
-            <FaSignOutAlt className="w-4 h-4" />
+            <span>Switch Role to {isAdmin ? 'CUSTOMER' : 'ADMIN'}</span>
           </button>
         </div>
       </aside>

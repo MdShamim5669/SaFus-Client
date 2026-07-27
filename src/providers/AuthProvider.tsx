@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { loginUser, registerUser, verifyOtp, UserProfile } from '../api/authApi';
+import { getSavedUserProfile, saveUserProfileToDb, updateUserProfileInBackend } from '../api/userApi';
 import { LoginSchemaType, RegisterSchemaType, OtpSchemaType } from '../schemas/authSchema';
 import { useAxiosPublic } from '../hooks/useAxiosPublic';
+import { axiosSecure } from '../api/axiosConfig';
 import { AuthContext } from '../context/AuthContext';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -15,7 +17,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storedPendingEmail = localStorage.getItem('pending_email');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        let parsed: UserProfile = JSON.parse(storedUser);
+        const savedDb = getSavedUserProfile(parsed.email);
+        if (savedDb?.photoURL && !parsed.photoURL) {
+          parsed.photoURL = savedDb.photoURL;
+        }
+        setUser(parsed);
       } catch (e) {
         localStorage.removeItem('user_data');
       }
@@ -31,9 +38,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const data = await loginUser(axiosPublic, credentials);
       if (data?.token && data?.user) {
+        let finalUser = data.user;
+        const savedDb = getSavedUserProfile(finalUser.email);
+        if (savedDb?.photoURL && !finalUser.photoURL) {
+          finalUser = { ...finalUser, photoURL: savedDb.photoURL };
+        }
         localStorage.setItem('access-token', data.token);
-        localStorage.setItem('user_data', JSON.stringify(data.user));
-        setUser(data.user);
+        localStorage.setItem('user_data', JSON.stringify(finalUser));
+        saveUserProfileToDb(finalUser);
+        setUser(finalUser);
       } else {
         throw new Error('Invalid login response format');
       }
@@ -41,15 +54,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Mock login for offline / demo mode or 404 route mismatch
       if (!import.meta.env.VITE_API_URL || err.code === 'ERR_NETWORK' || err.response?.status === 404) {
         const emailStr = credentials.email || 'user@safus.com';
+        const savedDb = getSavedUserProfile(emailStr);
         const mockUser: UserProfile = {
           _id: 'user_' + Date.now(),
-          name: emailStr.split('@')[0],
+          name: savedDb?.name || emailStr.split('@')[0],
           email: emailStr,
-          role: emailStr.toLowerCase().includes('admin') ? 'admin' : 'user',
+          role: emailStr.toLowerCase().includes('admin') ? 'admin' : (savedDb?.role || 'user'),
+          photoURL: savedDb?.photoURL,
           isVerified: true,
         };
         localStorage.setItem('access-token', 'jwt_token_' + Date.now());
         localStorage.setItem('user_data', JSON.stringify(mockUser));
+        saveUserProfileToDb(mockUser);
         setUser(mockUser);
       } else {
         throw err;
@@ -82,23 +98,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const emailToVerify = payload.email || pendingEmail || 'user@safus.com';
       const data = await verifyOtp(axiosPublic, { email: emailToVerify, otp: payload.otp });
+      let finalUser = data.user;
+      const savedDb = getSavedUserProfile(finalUser.email);
+      if (savedDb?.photoURL && !finalUser.photoURL) {
+        finalUser = { ...finalUser, photoURL: savedDb.photoURL };
+      }
       localStorage.setItem('access-token', data.token);
-      localStorage.setItem('user_data', JSON.stringify(data.user));
-      setUser(data.user);
+      localStorage.setItem('user_data', JSON.stringify(finalUser));
+      saveUserProfileToDb(finalUser);
+      setUser(finalUser);
       setPendingEmail(null);
       localStorage.removeItem('pending_email');
     } catch (err: any) {
       if (!import.meta.env.VITE_API_URL || err.code === 'ERR_NETWORK' || err.response?.status === 404) {
         const targetEmail = payload.email || pendingEmail || 'user@safus.com';
+        const savedDb = getSavedUserProfile(targetEmail);
         const mockUser: UserProfile = {
           _id: 'user_' + Date.now(),
-          name: targetEmail.split('@')[0],
+          name: savedDb?.name || targetEmail.split('@')[0],
           email: targetEmail,
-          role: 'user',
+          role: savedDb?.role || 'user',
+          photoURL: savedDb?.photoURL,
           isVerified: true,
         };
         localStorage.setItem('access-token', 'jwt_token_' + Date.now());
         localStorage.setItem('user_data', JSON.stringify(mockUser));
+        saveUserProfileToDb(mockUser);
         setUser(mockUser);
         setPendingEmail(null);
         localStorage.removeItem('pending_email');
@@ -116,6 +141,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  const updateUserRole = (newRole: 'admin' | 'customer' | 'user') => {
+    if (user) {
+      const updatedUser: UserProfile = { ...user, role: newRole };
+      setUser(updatedUser);
+      localStorage.setItem('user_data', JSON.stringify(updatedUser));
+      saveUserProfileToDb(updatedUser);
+    }
+  };
+
+  const updateUserProfilePhoto = async (photoURL: string) => {
+    if (user) {
+      const updatedUser: UserProfile = { ...user, photoURL };
+      setUser(updatedUser);
+      localStorage.setItem('user_data', JSON.stringify(updatedUser));
+      saveUserProfileToDb(updatedUser);
+      await updateUserProfileInBackend(axiosSecure, user.email, { photoURL }).catch(() => {});
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -127,9 +171,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         verifyOtpCode,
         logout,
+        updateUserRole,
+        updateUserProfilePhoto,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
+

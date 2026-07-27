@@ -21,7 +21,7 @@ import Swal from 'sweetalert2';
 import { uploadImageToCloudinary } from '../../utils/imageUpload';
 
 export const UserHome: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUserProfilePhoto } = useAuth();
   const { cart } = useCart();
 
   // Live orders from backend
@@ -100,17 +100,14 @@ export const UserHome: React.FC = () => {
 
       try {
         const uploadedUrl = await uploadImageToCloudinary(file);
-        if (user) {
-          const updatedUser = { ...user, photoURL: uploadedUrl };
-          localStorage.setItem('user_data', JSON.stringify(updatedUser));
+        if (user && updateUserProfilePhoto) {
+          await updateUserProfilePhoto(uploadedUrl);
           Swal.fire({
             icon: 'success',
-            title: 'Photo Uploaded!',
-            text: 'Your profile picture has been updated on Cloudinary.',
-            timer: 1500,
+            title: 'Photo Uploaded & Saved!',
+            text: 'Your Cloudinary profile picture has been permanently linked to your account.',
+            timer: 2000,
             showConfirmButton: false,
-          }).then(() => {
-            window.location.reload();
           });
         }
       } catch (e) {
