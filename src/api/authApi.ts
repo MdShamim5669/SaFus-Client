@@ -1,14 +1,8 @@
 import { AxiosInstance } from 'axios';
 import { LoginSchemaType, RegisterSchemaType, OtpSchemaType } from '../schemas/authSchema';
+import { UserProfile } from '../types/user';
 
-export interface UserProfile {
-  _id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'user';
-  photoURL?: string;
-  isVerified?: boolean;
-}
+export type { UserProfile };
 
 export const loginUser = async (axiosPublic: AxiosInstance, credentials: LoginSchemaType) => {
   try {

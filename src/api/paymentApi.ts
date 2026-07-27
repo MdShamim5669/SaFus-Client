@@ -1,21 +1,7 @@
 import { AxiosInstance } from 'axios';
-import { CheckoutSchemaType } from '../schemas/checkoutSchema';
-import { CartItem } from './cartApi';
+import { PaymentIntentResponse, SSLPaymentResponse, PaymentSavePayload } from '../types/payment';
 
-export interface PaymentIntentResponse {
-  clientSecret: string;
-}
-
-export interface SSLPaymentResponse {
-  gatewayUrl: string;
-}
-
-export interface PaymentSavePayload extends CheckoutSchemaType {
-  transactionId: string;
-  totalPrice: number;
-  items: CartItem[];
-  cartIds: string[];
-}
+export type { PaymentIntentResponse, SSLPaymentResponse, PaymentSavePayload };
 
 export const getStripePublishableKey = async (axiosPublic: AxiosInstance): Promise<string> => {
   try {

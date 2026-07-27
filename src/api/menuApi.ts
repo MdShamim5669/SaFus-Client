@@ -1,14 +1,8 @@
 import { AxiosInstance } from 'axios';
 import { MenuSchemaType } from '../schemas/menuSchema';
+import { MenuItem } from '../types/menu';
 
-export interface MenuItem {
-  _id: string;
-  name: string;
-  recipe: string;
-  image: string;
-  category: string;
-  price: number;
-}
+export type { MenuItem };
 
 export const fetchMenuItems = async (axiosPublic: AxiosInstance, category?: string): Promise<MenuItem[]> => {
   const url = category && category !== 'all' ? `/menu?category=${category}` : '/menu';
@@ -26,7 +20,7 @@ export const createMenuItem = async (axiosSecure: AxiosInstance, itemData: MenuS
   return response.data;
 };
 
-export const updateMenuItem = async (axiosSecure: AxiosInstance, id: string, itemData: MenuSchemaType): Promise<MenuItem> => {
+export const updateMenuItem = async (axiosSecure: AxiosInstance, id: string, itemData: Partial<MenuSchemaType>): Promise<MenuItem> => {
   const response = await axiosSecure.patch<MenuItem>(`/menu/${id}`, itemData);
   return response.data;
 };

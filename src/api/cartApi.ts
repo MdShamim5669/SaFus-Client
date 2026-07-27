@@ -1,15 +1,7 @@
 import { AxiosInstance } from 'axios';
-import { MenuItem } from './menuApi';
+import { CartItem } from '../types/cart';
 
-export interface CartItem {
-  _id: string;
-  menuId: string;
-  name: string;
-  image: string;
-  price: number;
-  quantity: number;
-  userEmail: string;
-}
+export type { CartItem };
 
 export const fetchUserCart = async (axiosSecure: AxiosInstance, email: string): Promise<CartItem[]> => {
   const response = await axiosSecure.get<CartItem[]>(`/carts?email=${email}`);
