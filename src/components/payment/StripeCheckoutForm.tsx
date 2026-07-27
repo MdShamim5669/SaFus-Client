@@ -222,13 +222,6 @@ export const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ payload,
         )}
       </div>
 
-      {/* Test card hint */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
-        <p className="font-bold mb-0.5">Test Cards:</p>
-        <p>✅ Valid: <span className="font-mono">4242 4242 4242 4242</span></p>
-        <p>❌ Declined: <span className="font-mono">4000 0000 0000 9995</span> (Insufficient funds)</p>
-        <p>Use any future date for expiry and any 3-digit CVC.</p>
-      </div>
 
       <Button
         variant="primary"
