@@ -235,19 +235,26 @@ export const UserHome: React.FC = () => {
         <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-4">
           <h3 className="font-cinzel font-bold text-lg uppercase tracking-wider text-gray-900 dark:text-white flex items-center space-x-2">
             <FaClock className="w-5 h-5 text-[#D1A054]" />
-            <span>My Orders & Order History</span>
+            <span>My Orders &amp; Order History</span>
           </h3>
-          {pendingCount > 0 && (
-            <span className="bg-yellow-100 text-yellow-800 border border-yellow-300 font-bold text-xs px-3 py-1 rounded-full">
-              {pendingCount} Pending
-            </span>
-          )}
-          <Link to="/shop" className="text-xs font-bold text-[#D1A054] hover:underline uppercase tracking-wider">
-            Explore Menu →
-          </Link>
+          <div className="flex items-center gap-3">
+            {cart.length > 0 && (
+              <span className="bg-orange-100 text-orange-700 border border-orange-300 font-bold text-xs px-3 py-1 rounded-full">
+                {cart.length} in cart
+              </span>
+            )}
+            {pendingCount > 0 && (
+              <span className="bg-yellow-100 text-yellow-800 border border-yellow-300 font-bold text-xs px-3 py-1 rounded-full">
+                {pendingCount} Pending
+              </span>
+            )}
+            <Link to="/shop" className="text-xs font-bold text-[#D1A054] hover:underline uppercase tracking-wider">
+              Explore Menu →
+            </Link>
+          </div>
         </div>
 
-        {orders.length === 0 ? (
+        {orders.length === 0 && cart.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-gray-400">
             <FaBoxOpen className="w-12 h-12 mb-3 opacity-30" />
             <p className="font-cinzel text-sm">No orders yet. Start ordering!</p>
@@ -258,40 +265,103 @@ export const UserHome: React.FC = () => {
             <table className="w-full text-left text-xs md:text-sm">
               <thead className="bg-[#F3F3F3] dark:bg-dark-200 text-gray-700 dark:text-gray-300 font-cinzel font-bold uppercase tracking-wider">
                 <tr>
-                  <th className="py-4 px-4 rounded-l">Order ID</th>
-                  <th className="py-4 px-4">Items</th>
+                  <th className="py-4 px-4 rounded-l">ID / Item</th>
+                  <th className="py-4 px-4">Product</th>
                   <th className="py-4 px-4">Date</th>
-                  <th className="py-4 px-4">Total</th>
+                  <th className="py-4 px-4">Price</th>
                   <th className="py-4 px-4">Payment</th>
                   <th className="py-4 px-4 rounded-r">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+
+                {/* ── Cart Items (not yet paid) ── */}
+                {cart.map((item) => (
+                  <tr key={'cart-' + item._id} className="hover:bg-orange-50 transition-colors">
+                    <td className="py-3 px-4 font-mono font-bold text-gray-500 text-xs">
+                      CART
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        {item.image && (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-8 h-8 rounded-lg object-cover border border-gray-200 shrink-0"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        )}
+                        <div>
+                          <p className="font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[120px]">{item.name}</p>
+                          <p className="text-gray-400 text-xs">Qty: {item.quantity || 1}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-gray-400 text-xs">—</td>
+                    <td className="py-3 px-4 font-bold text-[#D1A054]">
+                      ${(item.price * (item.quantity || 1)).toFixed(2)}
+                    </td>
+                    <td className="py-3 px-4">
+                      <Link
+                        to="/checkout"
+                        className="text-xs font-bold text-blue-500 hover:underline"
+                      >
+                        Pay Now →
+                      </Link>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-orange-100 text-orange-700 border border-orange-300">
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                        In Cart
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+
+                {/* ── Paid Orders ── */}
                 {orders.slice().reverse().map((order) => (
                   <tr key={order._id} className="hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors">
-                    <td className="py-4 px-4 font-mono font-bold text-gray-900 dark:text-white text-xs">
+                    <td className="py-3 px-4 font-mono font-bold text-gray-900 dark:text-white text-xs">
                       #{order._id.slice(-8).toUpperCase()}
                     </td>
-                    <td className="py-4 px-4 font-medium text-gray-800 dark:text-gray-200 max-w-[160px] truncate">
+                    <td className="py-3 px-4 font-medium text-gray-800 dark:text-gray-200 max-w-[160px] truncate">
                       {order.items?.map((it) => it.name).join(', ') || `${order.items?.length || 0} item(s)`}
                     </td>
-                    <td className="py-4 px-4 text-gray-500">
+                    <td className="py-3 px-4 text-gray-500">
                       {order.createdAt
                         ? new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                         : '—'}
                     </td>
-                    <td className="py-4 px-4 font-bold text-[#D1A054]">${order.totalPrice?.toFixed(2)}</td>
-                    <td className="py-4 px-4 text-gray-500 capitalize">{order.paymentMethod || 'Stripe'}</td>
-                    <td className="py-4 px-4">
+                    <td className="py-3 px-4 font-bold text-[#D1A054]">${order.totalPrice?.toFixed(2)}</td>
+                    <td className="py-3 px-4 text-gray-500 capitalize">{order.paymentMethod || 'Stripe'}</td>
+                    <td className="py-3 px-4">
                       <OrderStatusBadge status={order.status} />
                     </td>
                   </tr>
                 ))}
+
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Cart checkout CTA */}
+        {cart.length > 0 && (
+          <div className="mt-4 flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl px-5 py-3">
+            <p className="text-xs text-orange-700 font-bold">
+              🛒 You have <span className="text-orange-800">{cart.length}</span> item(s) in cart worth{' '}
+              <span className="text-orange-800">${cartTotal.toFixed(2)}</span>
+            </p>
+            <Link
+              to="/checkout"
+              className="px-4 py-2 bg-[#D1A054] hover:bg-[#b8893e] text-black text-xs font-cinzel font-bold uppercase tracking-wider rounded-lg transition-colors"
+            >
+              Proceed to Checkout →
+            </Link>
           </div>
         )}
       </div>
     </div>
   );
 };
+
