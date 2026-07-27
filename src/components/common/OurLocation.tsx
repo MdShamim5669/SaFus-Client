@@ -18,10 +18,10 @@ export const OurLocation: React.FC = () => {
             <h4 className="font-cinzel font-bold text-lg md:text-xl uppercase text-gray-900 tracking-wider">
               PHONE
             </h4>
-            <p className="text-gray-700 text-base md:text-lg font-bold">
+            <p className="text-gray-900 text-base md:text-lg font-extrabold">
               +880 1743597989
             </p>
-            <p className="text-gray-500 text-xs">Call us for reservations & catering queries</p>
+            <p className="text-gray-500 text-xs font-medium">Customer Support & Table Reservations</p>
           </div>
         </div>
 
@@ -30,15 +30,15 @@ export const OurLocation: React.FC = () => {
           <div className="bg-[#D1A054] h-16 flex items-center justify-center text-white shadow-sm">
             <FaMapMarkerAlt className="w-6 h-6" />
           </div>
-          <div className="flex-1 flex flex-col justify-center text-center space-y-3 bg-[#F3F3F3] p-6">
+          <div className="flex-1 flex flex-col justify-center text-center space-y-2 bg-[#F3F3F3] p-6">
             <h4 className="font-cinzel font-bold text-lg md:text-xl uppercase text-gray-900 tracking-wider">
               ADDRESS
             </h4>
-            <p className="text-gray-800 text-sm md:text-base font-bold leading-relaxed">
-              Daffodil International University
+            <p className="text-gray-900 text-sm md:text-base font-extrabold">
+              Daffodil Smart City
             </p>
-            <p className="text-gray-600 text-xs md:text-sm font-medium">
-              Dhaka, Bangladesh
+            <p className="text-gray-600 text-xs md:text-sm font-medium leading-relaxed">
+              Ashulia, Savar, Dhaka-1216, Bangladesh
             </p>
           </div>
         </div>
@@ -52,25 +52,25 @@ export const OurLocation: React.FC = () => {
             <h4 className="font-cinzel font-bold text-lg md:text-xl uppercase text-gray-900 tracking-wider">
               WORKING HOURS
             </h4>
-            <p className="text-gray-700 text-sm md:text-base font-bold">
+            <p className="text-gray-800 text-sm md:text-base font-bold">
               Mon - Fri: 08:00 AM - 10:00 PM
             </p>
-            <p className="text-gray-700 text-sm md:text-base font-bold">
+            <p className="text-gray-800 text-sm md:text-base font-bold">
               Sat - Sun: 10:00 AM - 11:00 PM
             </p>
           </div>
         </div>
       </div>
 
-      {/* Embedded Interactive Google Map */}
-      <div className="mt-12 rounded-2xl overflow-hidden border border-gray-300 shadow-xl h-96">
+      {/* Embedded Interactive Live Google Map for Daffodil Smart City */}
+      <div className="mt-12 rounded-2xl overflow-hidden border-2 border-[#D1A054]/40 shadow-2xl h-[450px] relative">
         <iframe
-          title="SaFus Restaurant Location Map"
+          title="SaFus Restaurant Live Map - Daffodil International University"
           src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3648.4285818987483!2d90.31885447605995!3d23.874404784725048!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8b087026b81%3A0x8fa563bbdd5904c2!2sDaffodil%20International%20University!5e0!3m2!1sen!2sbd!4v1700000000000!5m2!1sen!2sbd"
           width="100%"
           height="100%"
           style={{ border: 0 }}
-          allowFullScreen={false}
+          allowFullScreen={true}
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
         ></iframe>

@@ -116,11 +116,11 @@ export const Contact: React.FC = () => {
                 <h4 className="font-cinzel font-bold text-lg md:text-xl uppercase text-gray-900 tracking-wider">
                   ADDRESS
                 </h4>
-                <p className="text-gray-800 text-sm md:text-base font-bold leading-relaxed">
-                  Daffodil International University
+                <p className="text-gray-900 text-sm md:text-base font-extrabold">
+                  Daffodil Smart City
                 </p>
-                <p className="text-gray-600 text-xs md:text-sm font-medium">
-                  Dhaka, Bangladesh
+                <p className="text-gray-600 text-xs md:text-sm font-medium leading-relaxed">
+                  Ashulia, Savar, Dhaka-1216, Bangladesh
                 </p>
               </div>
             </div>
