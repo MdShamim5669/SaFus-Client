@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
-import { useAxiosSecure } from '../hooks/useAxiosSecure';
+import { axiosSecure } from '../api/axiosConfig';
 import { fetchUserCart, addToCart as addToCartApi, deleteCartItem, updateCartQuantity, clearUserCart, CartItem } from '../api/cartApi';
 import { MenuItem } from '../api/menuApi';
 import { CartContext } from '../context/CartContext';
@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient();
 
   // Local state fallback for non-logged-in guest cart
