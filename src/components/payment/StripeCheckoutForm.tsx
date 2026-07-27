@@ -3,11 +3,40 @@ import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useAxiosSecure } from '../../hooks/useAxiosSecure';
 import { createPaymentIntent, savePaymentRecord, PaymentSavePayload } from '../../api/paymentApi';
 import { Button } from '../common/Button';
+import { FaCreditCard, FaLock, FaExclamationTriangle } from 'react-icons/fa';
+import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
 
 interface StripeCheckoutFormProps {
   payload: Omit<PaymentSavePayload, 'transactionId'>;
   onSuccess: (transactionId: string) => void;
 }
+
+// Map Stripe error codes to user-friendly messages
+const getCardErrorMessage = (code?: string, message?: string): { title: string; detail: string; icon: 'error' | 'warning' } => {
+  switch (code) {
+    case 'card_declined':
+      return { title: 'Card Declined', detail: 'Your card was declined. Please try a different card or contact your bank.', icon: 'error' };
+    case 'insufficient_funds':
+      return { title: 'Insufficient Balance', detail: 'Your card has insufficient funds to complete this payment.', icon: 'warning' };
+    case 'incorrect_number':
+    case 'invalid_number':
+      return { title: 'Invalid Card Number', detail: 'The card number you entered is incorrect. Please check and try again.', icon: 'error' };
+    case 'invalid_expiry_month':
+    case 'invalid_expiry_year':
+    case 'expired_card':
+      return { title: 'Card Expired', detail: 'Your card has expired. Please use a different card.', icon: 'error' };
+    case 'incorrect_cvc':
+    case 'invalid_cvc':
+      return { title: 'Invalid CVC', detail: 'The CVC/CVV code you entered is incorrect.', icon: 'error' };
+    case 'processing_error':
+      return { title: 'Processing Error', detail: 'An error occurred while processing your card. Please try again.', icon: 'error' };
+    case 'do_not_honor':
+      return { title: 'Card Declined', detail: 'Your bank declined this transaction. Please contact your bank or try another card.', icon: 'error' };
+    default:
+      return { title: 'Payment Failed', detail: message || 'Your payment could not be processed. Please try again.', icon: 'error' };
+  }
+};
 
 export const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ payload, onSuccess }) => {
   const stripe = useStripe();
@@ -16,19 +45,55 @@ export const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ payload,
 
   const [cardError, setCardError] = useState<string | null>(null);
   const [processing, setProcessing] = useState<boolean>(false);
+  const [cardComplete, setCardComplete] = useState<boolean>(false);
+
+  const handleCardChange = (e: { complete: boolean; error?: { message: string } | null }) => {
+    setCardComplete(e.complete);
+    if (e.error) {
+      setCardError(e.error.message);
+    } else {
+      setCardError(null);
+    }
+  };
+
+  const showErrorModal = (title: string, detail: string, icon: 'error' | 'warning') => {
+    Swal.fire({
+      icon,
+      title: `<span style="font-family: Cinzel, serif; font-size: 1.1rem; color: #111;">${title}</span>`,
+      html: `<p style="font-size: 0.9rem; color: #555;">${detail}</p>`,
+      confirmButtonColor: '#D1A054',
+      confirmButtonText: 'Try Again',
+      showCloseButton: true,
+      customClass: {
+        popup: 'rounded-2xl shadow-2xl',
+      },
+    });
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setCardError(null);
 
     if (!stripe || !elements) {
+      toast.error('Stripe is not loaded yet. Please wait.');
       return;
     }
 
     const card = elements.getElement(CardElement);
-    if (!card) return;
+    if (!card) {
+      toast.error('Card element not found. Please refresh and try again.');
+      return;
+    }
+
+    // Validate card completeness before submitting
+    if (!cardComplete) {
+      setCardError('Please enter your complete card details.');
+      showErrorModal('Incomplete Card Details', 'Please fill in all card fields — card number, expiry date, and CVC.', 'warning');
+      return;
+    }
 
     setProcessing(true);
+    toast.loading('Processing payment...', { id: 'payment-toast' });
 
     try {
       // 1. Create PaymentIntent via backend API
@@ -37,12 +102,32 @@ export const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ payload,
         const res = await createPaymentIntent(axiosSecure, payload.totalPrice);
         clientSecret = res.clientSecret;
       } catch (e) {
-        // Fallback demo secret if server backend is not active
         clientSecret = 'mock_secret_' + Date.now();
       }
 
-      // If mock secret demo mode
+      // Demo/mock mode
       if (clientSecret.startsWith('mock_secret')) {
+        // Validate card in mock mode using stripe.createPaymentMethod
+        const { error: methodError } = await stripe.createPaymentMethod({
+          type: 'card',
+          card,
+          billing_details: {
+            name: payload.name || payload.email,
+            email: payload.email,
+          },
+        });
+
+        if (methodError) {
+          toast.dismiss('payment-toast');
+          setProcessing(false);
+          const errInfo = getCardErrorMessage(methodError.code, methodError.message);
+          setCardError(errInfo.detail);
+          showErrorModal(errInfo.title, errInfo.detail, errInfo.icon);
+          return;
+        }
+
+        toast.dismiss('payment-toast');
+        toast.success('Payment successful!');
         const mockTxId = 'txn_stripe_' + Math.random().toString(36).substring(2, 10);
         await savePaymentRecord(axiosSecure, { ...payload, transactionId: mockTxId, status: 'Pending' }).catch(() => {});
         onSuccess(mockTxId);
@@ -62,13 +147,18 @@ export const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ payload,
         },
       });
 
+      toast.dismiss('payment-toast');
+
       if (confirmError) {
-        setCardError(confirmError.message || 'Payment confirmation failed');
         setProcessing(false);
+        const errInfo = getCardErrorMessage(confirmError.code, confirmError.message);
+        setCardError(errInfo.detail);
+        showErrorModal(errInfo.title, errInfo.detail, errInfo.icon);
         return;
       }
 
       if (paymentIntent && paymentIntent.status === 'succeeded') {
+        toast.success('Payment successful! 🎉');
         await savePaymentRecord(axiosSecure, {
           ...payload,
           transactionId: paymentIntent.id,
@@ -77,18 +167,30 @@ export const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ payload,
         onSuccess(paymentIntent.id);
       }
     } catch (err: any) {
-      setCardError(err.message || 'An error occurred processing your payment.');
+      toast.dismiss('payment-toast');
+      const errInfo = getCardErrorMessage(err.code, err.message);
+      setCardError(errInfo.detail);
+      showErrorModal(errInfo.title, errInfo.detail, errInfo.icon);
     } finally {
       setProcessing(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-dark-100 p-6 rounded-xl border border-gray-800">
+    <form onSubmit={handleSubmit} className="space-y-5 bg-dark-100 p-6 rounded-xl border border-gray-800">
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-gray-300">Credit or Debit Card Details</label>
-        <div className="p-4 rounded-lg bg-dark-200 border border-gold-500/30">
+        <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+          <FaCreditCard className="text-[#D1A054]" />
+          Credit or Debit Card Details
+        </label>
+
+        <div
+          className={`p-4 rounded-lg bg-dark-200 border transition-colors ${
+            cardError ? 'border-red-500/60' : cardComplete ? 'border-green-500/60' : 'border-gold-500/30'
+          }`}
+        >
           <CardElement
+            onChange={handleCardChange}
             options={{
               style: {
                 base: {
@@ -105,7 +207,27 @@ export const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ payload,
             }}
           />
         </div>
-        {cardError && <p className="text-red-400 text-xs font-semibold mt-1">{cardError}</p>}
+
+        {/* Inline error message */}
+        {cardError && (
+          <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-1">
+            <FaExclamationTriangle className="text-red-500 w-3.5 h-3.5 mt-0.5 shrink-0" />
+            <p className="text-red-600 text-xs font-semibold">{cardError}</p>
+          </div>
+        )}
+
+        {/* Card complete success indicator */}
+        {cardComplete && !cardError && (
+          <p className="text-green-400 text-xs font-semibold mt-1">✓ Card details look good!</p>
+        )}
+      </div>
+
+      {/* Test card hint */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
+        <p className="font-bold mb-0.5">Test Cards:</p>
+        <p>✅ Valid: <span className="font-mono">4242 4242 4242 4242</span></p>
+        <p>❌ Declined: <span className="font-mono">4000 0000 0000 9995</span> (Insufficient funds)</p>
+        <p>Use any future date for expiry and any 3-digit CVC.</p>
       </div>
 
       <Button
@@ -116,7 +238,8 @@ export const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ payload,
         disabled={!stripe || processing}
         className="w-full"
       >
-        PAY ${payload.totalPrice.toFixed(2)} WITH STRIPE
+        <FaLock className="inline mr-2 w-3.5 h-3.5" />
+        PAY ${payload.totalPrice.toFixed(2)} SECURELY
       </Button>
     </form>
   );
