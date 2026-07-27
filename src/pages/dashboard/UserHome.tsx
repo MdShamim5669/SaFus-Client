@@ -33,12 +33,16 @@ export const UserHome: React.FC = () => {
 
   // Pending orders count for metrics
   const pendingCount = orders.filter((o) => o.status === 'Pending').length;
-  const totalSpent = orders.reduce((acc, o) => acc + (o.totalPrice || 0), 0);
+
+  // Total Spent = sum of all paid orders + current cart value
+  const ordersTotalSpent = orders.reduce((acc, o) => acc + (o.totalPrice || 0), 0);
+  const cartTotal = cart.reduce((acc, item) => acc + item.price * (item.quantity || 1), 0);
+  const totalSpent = ordersTotalSpent + cartTotal;
 
   const userStats = [
     {
       title: 'Cart Items',
-      value: cart.length,
+      value: cart.reduce((acc, item) => acc + (item.quantity || 1), 0),
       icon: FaShoppingBag,
       gradient: 'from-amber-500 to-yellow-600',
       link: '/cart',
