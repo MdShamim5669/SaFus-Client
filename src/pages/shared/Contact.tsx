@@ -101,8 +101,8 @@ export const Contact: React.FC = () => {
                 <h4 className="font-cinzel font-bold text-lg md:text-xl uppercase text-gray-900 tracking-wider">
                   PHONE
                 </h4>
-                <p className="text-gray-600 text-sm md:text-base font-medium">
-                  +38 (012) 34 56 789
+                <p className="text-gray-800 text-base md:text-lg font-bold">
+                  +880 1743597989
                 </p>
               </div>
             </div>
@@ -116,8 +116,11 @@ export const Contact: React.FC = () => {
                 <h4 className="font-cinzel font-bold text-lg md:text-xl uppercase text-gray-900 tracking-wider">
                   ADDRESS
                 </h4>
-                <p className="text-gray-600 text-sm md:text-base font-medium">
-                  +38 (012) 34 56 789
+                <p className="text-gray-800 text-sm md:text-base font-bold leading-relaxed">
+                  Daffodil International University
+                </p>
+                <p className="text-gray-600 text-xs md:text-sm font-medium">
+                  Dhaka, Bangladesh
                 </p>
               </div>
             </div>
@@ -131,11 +134,11 @@ export const Contact: React.FC = () => {
                 <h4 className="font-cinzel font-bold text-lg md:text-xl uppercase text-gray-900 tracking-wider">
                   WORKING HOURS
                 </h4>
-                <p className="text-gray-600 text-sm md:text-base font-medium">
-                  Mon - Fri: 08:00 - 22:00
+                <p className="text-gray-700 text-sm md:text-base font-bold">
+                  Mon - Fri: 08:00 AM - 10:00 PM
                 </p>
-                <p className="text-gray-600 text-sm md:text-base font-medium">
-                  Sat - Sun: 10:00 - 23:00
+                <p className="text-gray-700 text-sm md:text-base font-bold">
+                  Sat - Sun: 10:00 AM - 11:00 PM
                 </p>
               </div>
             </div>

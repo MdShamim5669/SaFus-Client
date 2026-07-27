@@ -8,6 +8,7 @@ import { CallUsBanner } from './CallUsBanner';
 import { ChefRecommends } from './ChefRecommends';
 import { FeaturedSection } from './Featured';
 import { TestimonialsSection } from './Testimonials';
+import { OurLocation } from '../../components/common/OurLocation';
 
 export const Home: React.FC = () => {
   return (
@@ -26,6 +27,7 @@ export const Home: React.FC = () => {
       <CallUsBanner />
       <ChefRecommends />
       <FeaturedSection />
+      <OurLocation />
       <TestimonialsSection />
     </div>
   );
