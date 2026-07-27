@@ -6,12 +6,13 @@ import { fetchUserCart, addToCart as addToCartApi, deleteCartItem, updateCartQua
 import { MenuItem } from '../api/menuApi';
 import { CartContext } from '../context/CartContext';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Local state fallback for guest cart & instant client sync
+  // Local state fallback for logged-in user cart & instant client sync
   const [localCart, setLocalCart] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem('bistro_guest_cart');
     return saved ? JSON.parse(saved) : [];
@@ -23,8 +24,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     enabled: !!user?.email,
   });
 
-  // Merged cart: combines server items or fallback to local cart
-  const cart = user && serverCart.length > 0 ? serverCart : localCart;
+  // Cart is active only when user is logged in
+  const cart = user ? (serverCart.length > 0 ? serverCart : localCart) : [];
 
   const addItemMutation = useMutation({
     mutationFn: async (item: MenuItem) => {
@@ -75,6 +76,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     },
   });
+
+  const handleAddToCart = (item: MenuItem) => {
+    if (!user) {
+      Swal.fire({
+        title: 'You are not Logged In',
+        text: 'Please login to add items to the cart.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, login!',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = '/login';
+        }
+      });
+      return;
+    }
+    addItemMutation.mutate(item);
+  };
 
   const removeItemMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -133,7 +154,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         cart,
         isLoading,
         total,
-        addToCart: (item: MenuItem) => addItemMutation.mutate(item),
+        addToCart: handleAddToCart,
         removeFromCart: (id: string) => removeItemMutation.mutate(id),
         updateQuantity,
         clearCart,
